@@ -1,6 +1,7 @@
 //  Page 1
 // TX
 // Wemos D1 Mini
+const byte tr = 02; // This Room
 
 #include <SimpleTimer.h>
 SimpleTimer timer;
@@ -9,7 +10,6 @@ SimpleTimer timer;
 bool pirState = false; // we start, assuming no motion detected
 bool val = false; // variable for reading the pin status
 
-const byte tr = 02; // This Room
 
 #include <RF24.h>
 #include <RF24Network.h>
@@ -26,6 +26,7 @@ const uint16_t this_node = tr;    // Address of this node in Octal format ( 04, 
 struct dataTX {
   const byte room = tr;
   bool alert = false;
+  bool stat = false;
 };
 struct dataTX dataTX;
 //bool chSt = false;  // Check status // For input value form nodeBase
@@ -47,7 +48,7 @@ void setup() {
   
   Serial.println("\nStart! : Room" + String(tr));
 
-  timer.setInterval(1, loopTx);
+  timer.setInterval(1, _loopTx);
 }
 
 void loop() {
@@ -58,7 +59,7 @@ void loop() {
 //-------------------------------
 //  Page 2
 void _loopTx() {
-  
+  network.update();
   bool chSt = false;  // For data from NodeBase
   while ( network.available() ) {
     RF24NetworkHeader header00;
@@ -75,7 +76,7 @@ void _loopTx() {
 
       //  Send data
       dataTX.alert = true;
-      network.update();
+      dataTX.stat = chSt;
       RF24NetworkHeader header00(nodeBase); // (Address where the data is going)
       bool ok = network.write(header00, &dataTX, sizeof(dataTX));
     }
@@ -86,6 +87,7 @@ void _loopTx() {
       Serial.println(String(chSt));
       pirState = false;
       dataTX.alert = false;
+      dataTX.stat = false;
     }
   }
 }
