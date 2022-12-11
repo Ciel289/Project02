@@ -29,7 +29,6 @@ struct dataTX {
   bool stat = false;
 };
 struct dataTX dataTX;
-//bool chSt = false;  // Check status // For input value form nodeBase
 
 // Function
 void _loopTx();
@@ -55,7 +54,6 @@ void loop() {
   timer.run();
 }
 
-
 //-------------------------------
 //  Page 2
 void _loopTx() {
@@ -64,7 +62,7 @@ void _loopTx() {
   while ( network.available() ) {
     RF24NetworkHeader header00;
     network.read(header00, &chSt, sizeof(chSt));
-    Serial.println(String(chSt));
+//    Serial.println(String(chSt));
   }
 
   val = digitalRead(inputPin);
