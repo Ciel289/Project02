@@ -1,7 +1,24 @@
 //  Page 1
-// RX
-#include <SimpleTimer.h>
-SimpleTimer timer;
+
+// Fill-in information from your Blynk Template here
+#define BLYNK_TEMPLATE_ID "--"
+#define BLYNK_DEVICE_NAME "--"
+#define BLYNK_AUTH_TOKEN "--"
+
+#define BLYNK_FIRMWARE_VERSION        "0.1.0"
+
+#define BLYNK_PRINT Serial
+#define BLYNK_DEBUG
+
+#define APP_DEBUG
+
+// Uncomment your board, or configure a custom board in Settings.h
+#define USE_WROVER_BOARD
+//#define USE_TTGO_T7
+
+#include "BlynkEdgent.h"
+BlynkTimer timer;
+
 
 //  NRF24L01
 #include <RF24.h>
@@ -15,78 +32,95 @@ const uint16_t node01 = 01;
 const uint16_t node02 = 02;
 const uint16_t node03 = 03;
 const uint16_t node04 = 04;
-uint16_t allNode[4] = {node01, node02, node03, node04}; // Start at number 0 --> 0+1=1
+uint16_t allNode[4] = {node01, node02, node03, node04};
 
 //  Line and Wifi
 #include <TridentTD_LineNotify.h>
-#define SSID        "vivo 1902"      // Wifi's name  // vivo 1902  // OPPO A95
-#define PASSWORD    "gg123456"     // Wifi's password
-#define LINE_TOKEN  "lSMmKS2JyJHKDHeauWNonMprq6Fwj6xmm42epuahaI2"   // รหัส TOKEN ที่ได้มาจากข้างบน
+//#define SSID        "--"      // Wifi's name
+//#define PASSWORD    "--"     // Wifi's password
+#define LINE_TOKEN  "--"   // รหัส TOKEN ที่ได้มาจากข้างบน
 
-//  Function
-void _ttime();
-void _chSt(byte inc);
-void _runT();
+
 
 //  Struct for data
 struct dataRX {
   byte room = NULL;
   bool alert = false;
   bool stat = false;
-};
+};;
 struct dataRX dataRX;
+bool roomSt = false;  // Room status  // Input form blynk
 
+//  All of function
+void _runT();
+void _chSt(byte inc);
 
-//  Start!
 void setup() {
   Serial.begin(115200);
-
-  WiFi.begin(SSID, PASSWORD);
-  Serial.printf("WiFi connecting to %s\n",  SSID);
-  byte i = 0;
-  while (WiFi.status() != WL_CONNECTED) {
-    Serial.print(".");
-    i++;
-    if (i == 50) {
-      break;
-    }
-    delay(100);
-  }
-  WiFi.status() == WL_CONNECTED ? Serial.print("\nWiFi connected\nIP : ") : Serial.println("Can't connected\n");
-  Serial.println(WiFi.localIP());
-
-  Serial.println(LINE.getVersion());
-  LINE.setToken(LINE_TOKEN);
-  LINE.notify("Hello from ESP32 Main Security");
-
+  delay(100);
+  
+  
   SPI.begin();
   radio.begin();
   network.begin(99, this_node); //(channel, node address)
   radio.setDataRate(RF24_2MBPS);
   radio.printDetails();
-
+  
+  Serial.println(LINE.getVersion());
+  LINE.setToken(LINE_TOKEN);
+  LINE.notify("Hello from ESP32 Main Security");
+  
+  BlynkEdgent.begin();
+  
   timer.setInterval(1, _runT);
-  timer.setInterval(30L * 1000L, _ttime);
 }
 
 void loop() {
+  BlynkEdgent.run();
   timer.run();
 }
-
 
 //---------------------------------------
 //  Page 2
 
+BLYNK_WRITE(V1) {
+  roomSt = param.asInt();
+  if (roomSt, roomSt) {
+    _chSt(01);
+    roomSt = false;
+  }
+}
 
-void _ttime() { // Function for test
-  dataRX.room = NULL;
-  dataRX.alert = false;
-  dataRX.stat = false;
-  _chSt(1); // Test send to node01
+BLYNK_WRITE(V2) {
+  roomSt = param.asInt();
+  if (roomSt, roomSt) {
+    _chSt(02);
+    roomSt = false;
+  }
+}
+
+BLYNK_WRITE(V3) {
+  roomSt = param.asInt();
+  if (roomSt) {
+    _chSt(03);
+    roomSt = false;
+  }
+}
+
+BLYNK_WRITE(V4) {
+  roomSt = param.asInt();
+  if (roomSt) {
+    _chSt(04);
+    roomSt = false;
+  }
 }
 
 
+//---------------------------------------
+//  Page 3
+
 void _chSt(byte inc) {
+  inc--;
   const bool stas = true;
   network.update();
   RF24NetworkHeader header00(allNode[inc]); // (Address where the data is going)
@@ -119,8 +153,5 @@ void _runT() {
       }
     }
   }
-
 }
-
-
 
